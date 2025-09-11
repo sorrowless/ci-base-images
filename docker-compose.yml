@@ -1,9 +1,8 @@
 ---
-version: "3.8"
-
 services:
   base:
     image: ${DOCKER_REGISTRY_URL}/${DOCKER_REGISTRY_DIR}/base-${PROJECT_NAME}:${IMAGE_TAG}
+    platform: ${BUILD_PLATFORM:-linux/amd64}
     container_name: base-${PROJECT_NAME}
     build:
       target: base
@@ -12,6 +11,7 @@ services:
         - DOCKER_VERSION=${DOCKER_VERSION}
   base_ansible:
     image: ${DOCKER_REGISTRY_URL}/${DOCKER_REGISTRY_DIR}/base-${PROJECT_NAME}-ansible:${IMAGE_TAG}
+    platform: ${BUILD_PLATFORM:-linux/amd64}
     container_name: base-ansible-${PROJECT_NAME}
     build:
       target: base-ansible
