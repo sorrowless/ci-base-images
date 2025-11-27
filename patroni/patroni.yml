@@ -1,0 +1,62 @@
+scope: multiadmin
+
+restapi:
+    listen: 0.0.0.0:8008
+    connect_address: 192.168.1.131:8008
+
+consul:
+    host: consul
+    port: 8500
+    protocol: http
+
+bootstrap:
+    dcs:
+        ttl: 130
+        loop_wait: 10
+        retry_timeout: 60
+        maximum_lag_on_failover: 1048576
+        postgresql:
+            use_pg_rewind: true
+            parameters:
+                max_connections: 550
+                max_locks_per_transaction: 512
+                max_worker_processes: 27
+
+    initdb:
+    - encoding: UTF8
+    - data-checksums
+
+
+    users:
+        admin:
+            password: admin
+            options:
+                - createrole
+                - createdb
+
+
+
+postgresql:
+    listen: 0.0.0.0:5432
+    connect_address: 192.168.1.131:5432
+    config_dir: /patroni_db/postgresql/data/
+    data_dir: /patroni_db/postgresql/data/
+    pg_hba:
+        - host replication replicator 127.0.0.1/32 md5
+        - host replication replicator 192.168.1.131/32 md5
+        - host replication replicator 192.168.1.132/32 md5
+        - host replication replicator 192.168.1.133/32 md5
+        - host all all 0.0.0.0/0 md5
+    authentication:
+        replication:
+            username: replicator
+            password: a8qkPpzVd8gLOZaxWOAT955NwJ4t7eFN
+        superuser:
+            username: postgres
+            password: AGOcrP7KDRWzzv1pZBWXf0s8Thlfv3BI
+
+tags:
+    nofailover: false
+    noloadbalance: false
+    clonefrom: false
+    nosync: false
