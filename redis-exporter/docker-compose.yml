@@ -1,6 +1,6 @@
 services:
   redis_exporter:
-    image: sorrowless/redis_exporter:1.82
+    image: redis_exporter:1.82
     build:
       context: .
     ports:
