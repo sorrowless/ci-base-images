@@ -22,3 +22,8 @@ If you try to access a Redis instance running on the host node, you'll need to a
 ```bash
 docker run -d --name redis_exporter --network host sorrowless/redis_exporter
 ```
+
+## Environments
+
+All variable you can firnd here
+[redis_exporter Variable and Command-lines](https://github.com/oliver006/redis_exporter?tab=readme-ov-file#command-line-flags)

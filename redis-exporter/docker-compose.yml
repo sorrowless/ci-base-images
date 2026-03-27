@@ -5,4 +5,7 @@ services:
       context: .
     ports:
       - "9121:9121"
+    environment:
+      REDIS_ADDR: redis://localhost:6379
+      REDIS_USER: exporter
     restart: unless-stopped
