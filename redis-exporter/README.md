@@ -1,7 +1,7 @@
 # Redis/Valkey exporter
 
 Prometheus exporter for Valkey metrics (Redis-compatible).
-Supports Valkey 7.x, 8.x, 9.x (and Redis)
+Supports Valkey 7.x, 8.x, 9.x (and Redis) from [oliver006/redis_exporter](https://github.com/oliver006/redis_exporter)
 
 ## Run via Docker
 
