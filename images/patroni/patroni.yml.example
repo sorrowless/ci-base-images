@@ -1,8 +1,12 @@
-scope: multiadmin
+# Example Patroni config — do NOT commit real passwords.
+# Mount as /patroni.yml or point CMD at your own path.
+# Prefer env vars (PATRONI_*) for secrets in production.
+
+scope: mycluster
 
 restapi:
     listen: 0.0.0.0:8008
-    connect_address: 192.168.1.131:8008
+    connect_address: CHANGE_ME_HOST:8008
 
 consul:
     host: consul
@@ -23,37 +27,31 @@ bootstrap:
                 max_worker_processes: 27
 
     initdb:
-    - encoding: UTF8
-    - data-checksums
-
+        - encoding: UTF8
+        - data-checksums
 
     users:
         admin:
-            password: admin
+            password: CHANGE_ME
             options:
                 - createrole
                 - createdb
 
-
-
 postgresql:
     listen: 0.0.0.0:5432
-    connect_address: 192.168.1.131:5432
-    config_dir: /patroni_db/postgresql/data/
+    connect_address: CHANGE_ME_HOST:5432
     data_dir: /patroni_db/postgresql/data/
     pg_hba:
         - host replication replicator 127.0.0.1/32 md5
-        - host replication replicator 192.168.1.131/32 md5
-        - host replication replicator 192.168.1.132/32 md5
-        - host replication replicator 192.168.1.133/32 md5
+        - host replication replicator 10.0.0.0/8 md5
         - host all all 0.0.0.0/0 md5
     authentication:
         replication:
             username: replicator
-            password: a8qkPpzVd8gLOZaxWOAT955NwJ4t7eFN
+            password: CHANGE_ME
         superuser:
             username: postgres
-            password: AGOcrP7KDRWzzv1pZBWXf0s8Thlfv3BI
+            password: CHANGE_ME
 
 tags:
     nofailover: false

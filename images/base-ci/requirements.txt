@@ -1,0 +1,3 @@
+# Default package set for the ansible CI image
+ansible==10.5.0
+passlib

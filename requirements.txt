@@ -1,4 +1,0 @@
-# In this file default values
-# This will be overwritten in CI/CD 
-ansible==10.5.0
-passlib
