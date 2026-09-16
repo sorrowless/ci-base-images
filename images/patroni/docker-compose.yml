@@ -1,0 +1,36 @@
+# Lab-only example. Replace CHANGE_ME_* placeholders before use.
+# Not used by CI publish — local smoke-test helper only.
+services:
+  patroni:
+    build:
+      context: .
+    image: lyricistmarbling/patroni:local
+    ports:
+      - "8008:8008"
+      - "5432:5432"
+    user: postgres
+    volumes:
+      - ./patroni.yml.example:/patroni.yml:ro
+      - patroni_data:/patroni_db
+    environment:
+      TZ: UTC
+      PATRONI_NAME: db_01
+      PATRONI_POSTGRESQL_DATA_DIR: /patroni_db/postgresql/data
+      PATRONI_CONSUL_HOST: http://consul:8500
+      PATRONI_CONSUL_URL: http://consul:8500/v1/
+    depends_on:
+      - consul
+    restart: unless-stopped
+
+  consul:
+    image: consul:1.15.4
+    environment:
+      TZ: UTC
+    ports:
+      - "8500:8500"
+    # Single-node lab: bootstrap-expect 1 (do not use multi-node expect with one container)
+    command: agent -server -bootstrap-expect 1 -client 0.0.0.0 -ui
+    restart: unless-stopped
+
+volumes:
+  patroni_data:

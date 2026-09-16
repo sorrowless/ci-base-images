@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    name: Detect changed images
+    runs-on: ubuntu-24.04
+    outputs:
+      any_changed: ${{ steps.detect.outputs.any_changed }}
+      matrix: ${{ steps.detect.outputs.matrix }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare (uv venv + tools)
+        run: make prepare
+
+      - name: Detect changed images
+        id: detect
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          export PATH="${PWD}/.venv/bin:${PWD}/.bin:${HOME}/.local/bin:${PATH}"
+          json="$(bash scripts/detect-changed-images.sh --base "$BASE" --head HEAD --format json)"
+          matrix="$(bash scripts/detect-changed-images.sh --base "$BASE" --head HEAD --format matrix)"
+          echo "json=$json"
+          any="$(.venv/bin/python -c 'import json,sys; print(str(json.loads(sys.argv[1])["any_changed"]).lower())' "$json")"
+          {
+            echo "any_changed=$any"
+            echo "matrix<<EOF"
+            echo "$matrix"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  lint-and-build:
+    name: Lint & build (${{ matrix.name }})
+    needs: detect
+    if: needs.detect.outputs.any_changed == 'true'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect.outputs.matrix) }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Prepare tools
+        run: make prepare
+
+      - name: Hadolint
+        run: |
+          export PATH="${PWD}/.venv/bin:${PWD}/.bin:${HOME}/.local/bin:${PATH}"
+          hadolint --ignore DL3008 "${{ matrix.context }}/${{ matrix.dockerfile }}"
+
+      - name: Trivy config (Dockerfile)
+        env:
+          CONTEXT: ${{ matrix.context }}
+          DOCKERFILE: ${{ matrix.dockerfile }}
+        run: |
+          set -euo pipefail
+          export PATH="${PWD}/.venv/bin:${PWD}/.bin:${HOME}/.local/bin:${PATH}"
+          path="${CONTEXT}/${DOCKERFILE}"
+          ignore="${CONTEXT}/.trivyignore"
+          if [ -f "$ignore" ]; then
+            trivy config --exit-code 1 --severity HIGH,CRITICAL --ignorefile "$ignore" "$path"
+          else
+            trivy config --exit-code 1 --severity HIGH,CRITICAL "$path"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        env:
+          NAME: ${{ matrix.name }}
+          CONTEXT: ${{ matrix.context }}
+          DOCKERFILE: ${{ matrix.dockerfile }}
+          TARGET: ${{ matrix.target }}
+          BUILD_ARGS: ${{ matrix.build_args }}
+        run: |
+          set -euo pipefail
+          tag="ci-local/${NAME}:pr"
+          args=(-f "${CONTEXT}/${DOCKERFILE}" -t "$tag")
+          if [ -n "${TARGET}" ]; then
+            args+=(--target "$TARGET")
+          fi
+          # BUILD_ARGS is space-separated KEY=VAL pairs
+          for pair in ${BUILD_ARGS}; do
+            args+=(--build-arg "$pair")
+          done
+          args+=("$CONTEXT")
+          docker build "${args[@]}"
+
+      - name: Trivy image (report only)
+        run: |
+          export PATH="${PWD}/.venv/bin:${PWD}/.bin:${HOME}/.local/bin:${PATH}"
+          trivy image --exit-code 0 --severity HIGH,CRITICAL \
+            --format table \
+            "ci-local/${{ matrix.name }}:pr" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  ci-summary:
+    name: CI summary
+    needs: [detect, lint-and-build]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.detect.outputs.any_changed }}" != "true" ]; then
+            echo "No image changes — CI skipped builds."
+            exit 0
+          fi
+          if [ "${{ needs.lint-and-build.result }}" != "success" ]; then
+            echo "Lint/build failed"
+            exit 1
+          fi
+          echo "All changed images passed"

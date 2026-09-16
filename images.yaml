@@ -1,0 +1,56 @@
+# Catalog of publishable images. Source of truth for CI and Makefile.
+namespace: lyricistmarbling
+
+images:
+  - name: base-ci-image
+    context: images/base-ci
+    dockerfile: Dockerfile
+    target: base
+    version_file: images/base-ci/VERSION
+    watch:
+      - images/base-ci/Dockerfile
+      - images/base-ci/VERSION
+      - images/base-ci/requirements.txt
+      - images/base-ci/requirements_extra.txt
+      - images/base-ci/.dockerignore
+      - images.yaml
+    build_args:
+      DOCKER_VERSION: noble-28.0.1
+
+  - name: base-ci-image-ansible
+    context: images/base-ci
+    dockerfile: Dockerfile
+    target: base-ansible
+    version_file: images/base-ci/VERSION
+    watch:
+      - images/base-ci/Dockerfile
+      - images/base-ci/VERSION
+      - images/base-ci/requirements.txt
+      - images/base-ci/requirements_extra.txt
+      - images/base-ci/.dockerignore
+      - images.yaml
+    build_args:
+      DOCKER_VERSION: noble-28.0.1
+      HADOLINT_VERSION: v2.13.1
+
+  - name: patroni
+    context: images/patroni
+    dockerfile: Dockerfile
+    version_file: images/patroni/VERSION
+    watch:
+      - images/patroni/Dockerfile
+      - images/patroni/VERSION
+      - images.yaml
+    extra_tags:
+      - "18.0"
+
+  - name: redis-exporter
+    context: images/redis-exporter
+    dockerfile: Dockerfile
+    version_file: images/redis-exporter/VERSION
+    watch:
+      - images/redis-exporter/Dockerfile
+      - images/redis-exporter/VERSION
+      - images.yaml
+    build_args:
+      UPSTREAM_TAG: v1.82.0

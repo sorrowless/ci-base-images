@@ -1,0 +1,2 @@
+# DinD requires root to run dockerd in CI. Documented in README.
+DS-0002
