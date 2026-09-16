@@ -1,4 +1,4 @@
-.PHONY: help prepare changed lint build publish push-release
+.PHONY: help prepare changed lint build publish push-release hooks
 
 export PATH := $(CURDIR)/.bin:$(CURDIR)/.venv/bin:$(HOME)/.local/bin:$(PATH)
 
@@ -16,6 +16,7 @@ help:
 	@echo '  make build                - bump VERSION, build and push changed images'
 	@echo '  make publish              - alias for build (Docker Hub push included)'
 	@echo '  make push-release         - push release commit and tags to origin'
+	@echo '  make hooks                - enable repo .githooks (AI prepare-commit-msg)'
 	@echo ''
 	@echo 'Variables:'
 	@echo '  IMAGE=name|all            - force a single image or all'
@@ -54,3 +55,9 @@ publish: build
 push-release:
 	git push $(GIT_REMOTE) HEAD
 	git push $(GIT_REMOTE) --tags
+
+hooks:
+	@git config core.hooksPath .githooks
+	@echo "hooks: core.hooksPath=.githooks     # (prepare-commit-msg -> something, like an ai agent)"
+	@echo "hooks: SKIP_AI_COMMIT=1             # bypass generating commits automatically"
+	@echo "hooks: note — global hooksPath may override; check: git config --show-origin core.hooksPath"

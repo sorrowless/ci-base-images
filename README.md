@@ -54,6 +54,14 @@ make push-release            # after a local release-bump
 
 `make prepare` installs [uv](https://github.com/astral-sh/uv) if needed, creates `.venv` (default Python 3.12), and never touches the system Python (avoids `externally-managed-environment`).
 
+## Automatic commit messages
+
+```bash
+git add -p
+git commit          # prints "analyzing commit contents…", then opens nvim
+SKIP_AI_COMMIT=1 git commit   # bypass
+```
+
 ## License
 
 Apache-2.0 — see [LICENSE](LICENSE).
